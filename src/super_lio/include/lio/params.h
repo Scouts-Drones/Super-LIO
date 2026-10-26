@@ -81,6 +81,7 @@ namespace LI2Sup{
   extern bool g_visual_map;
   extern bool g_visual_dense;
   extern int  g_pub_step;
+  extern int  g_octvox_pub_step;
 
   /// for planner
   extern bool g_planner_enable;

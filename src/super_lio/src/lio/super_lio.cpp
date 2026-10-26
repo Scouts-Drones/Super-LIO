@@ -561,6 +561,17 @@ void SuperLIO::Output(){
   auto state = kf_->GetNavState();
   data_wrapper_->pub_odom(state);  
 
+  // same thread as UpdateMap(), so reading ivox_ here needs no lock.
+  if(g_octvox_pub_step > 0){
+    static int octvox_count = 0;
+    if(++octvox_count >= g_octvox_pub_step){
+      octvox_count = 0;
+      std::vector<float> xyz;
+      ivox_->getMap(xyz);
+      data_wrapper_->pub_octvox_map(xyz, state.timestamp);
+    }
+  }
+
   Eigen::Matrix4f transformation = Eigen::Matrix4f::Identity();
   transformation.block<3, 3>(0, 0) = state.R.R_.cast<float>();
   transformation.block<3, 1>(0, 3) = state.p.cast<float>();

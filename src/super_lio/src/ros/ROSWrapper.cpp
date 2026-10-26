@@ -174,6 +174,10 @@ void LoadParamFromRos(rclcpp::Node& node)
   node.declare_parameter<int>("lio.output.pub_step", 0);
   node.get_parameter("lio.output.pub_step", g_pub_step);
 
+  // publish the OctVoxMap every N frames on /lio/octvox_map; 0 = off.
+  node.declare_parameter<int>("lio.output.octvox_map_step", 0);
+  node.get_parameter("lio.output.octvox_map_step", g_octvox_pub_step);
+
   // ================= relocation =================
   node.declare_parameter<bool>("lio.relocation.update_map", false);
   node.get_parameter("lio.relocation.update_map", g_update_map);
@@ -647,6 +651,23 @@ void ROSWrapper::pub_cloud_world(const CloudPtr& pc, double time){
   cloud.header.frame_id = "world";
   cloud.header.stamp = toRosTime(time);
   pub_cloud_world_->publish(cloud);
+}
+
+
+void ROSWrapper::pub_octvox_map(const std::vector<float>& xyz, double time){
+  static auto pub_octvox_map_ =
+    this->create_publisher<sensor_msgs::msg::PointCloud2>(
+        "/lio/octvox_map", rclcpp::QoS(1).transient_local());
+  pcl::PointCloud<pcl::PointXYZ> pc;
+  pc.reserve(xyz.size() / 3);
+  for(std::size_t i = 0; i + 2 < xyz.size(); i += 3){
+    pc.emplace_back(xyz[i], xyz[i + 1], xyz[i + 2]);
+  }
+  sensor_msgs::msg::PointCloud2 cloud;
+  pcl::toROSMsg(pc, cloud);
+  cloud.header.frame_id = "world";
+  cloud.header.stamp = toRosTime(time);
+  pub_octvox_map_->publish(cloud);
 }
 
 
